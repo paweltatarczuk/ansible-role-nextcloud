@@ -1,0 +1,6 @@
+---
+# handlers file for ansible-role-nextcloud
+- name: Reload PHP-FPM
+  service:
+    name: php7.1-fpm
+    state: reloaded

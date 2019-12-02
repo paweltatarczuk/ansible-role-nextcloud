@@ -1,0 +1,13 @@
+---
+- name: Prepare
+  hosts: instance
+  tasks:
+    - name: Ensure libfcgi0ldbl is present
+      package:
+        name: libfcgi0ldbl
+        state: present
+
+    - name: Ensure procps is present
+      package:
+        name: procps
+        state: present
