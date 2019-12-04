@@ -8,9 +8,9 @@
     home: "{{ nextcloud_dir }}"
     state: present
 
-- name: Ensure nextcloud user is present in www-data group
+- name: Ensure http server is is present in http server group
   user:
-    name: www-data
+    name: "{{ nextcloud_http_server_user }}"
     group: "{{ nextcloud_user }}"
     append: True
     state: present

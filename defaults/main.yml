@@ -4,6 +4,9 @@ nextcloud_version: 17.0.1
 nextcloud_dir: /srv/nextcloud
 nextcloud_user: www-nextcloud
 
+nextcloud_http_server_user: www-data
+nextcloud_http_server_group: www-data
+
 nextcloud_database: mysql
 nextcloud_database_host: database
 nextcloud_database_name: nextcloud

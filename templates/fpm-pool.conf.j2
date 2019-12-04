@@ -4,8 +4,8 @@ group = {{ nextcloud_user }}
 
 listen = /run/php/php7.1-nextcloud-fpm.sock
 
-listen.owner = www-data
-listen.group = www-data
+listen.owner = {{ nextcloud_http_server_user }}
+listen.group = {{ nextcloud_http_server_group }}
 
 pm = ondemand
 
