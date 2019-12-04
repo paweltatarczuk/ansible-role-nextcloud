@@ -1,0 +1,17 @@
+[nextcloud]
+user = {{ nextcloud_user }}
+group = {{ nextcloud_user }}
+
+listen = /run/php/php7.1-nextcloud-fpm.sock
+
+listen.owner = www-data
+listen.group = www-data
+
+pm = ondemand
+
+pm.max_children = 5
+pm.process_idle_timeout = 10s;
+pm.status_path = /status
+
+ping.path = /ping
+ping.response = pong

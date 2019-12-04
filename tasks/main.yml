@@ -1,0 +1,116 @@
+---
+# tasks file for ansible-role-nextcloud
+
+- name: Ensure nextcloud user is present
+  user:
+    name: "{{ nextcloud_user }}"
+    create_home: False
+    home: "{{ nextcloud_dir }}"
+    state: present
+
+- name: Ensure nextcloud user is present in www-data group
+  user:
+    name: www-data
+    group: "{{ nextcloud_user }}"
+    append: True
+    state: present
+
+- name: Ensure nextcloud user directory is present
+  file:
+    path: "{{ nextcloud_dir }}"
+    owner: "{{ nextcloud_user }}"
+    group: "{{ nextcloud_user }}"
+    state: directory
+
+- name: Ensure gpg is present
+  package:
+    name: gpg
+    state: present
+
+- name: Ensure sury key is present
+  apt_key:
+    url: https://packages.sury.org/php/apt.gpg
+    state: present
+
+- name: Ensure sury ppa is present
+  apt_repository:
+    repo: deb https://packages.sury.org/php/ {{ ansible_distribution_release }} main
+    state: present
+
+- name: Ensure required packages are present
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php7.1-curl
+    - php7.1-fpm
+    - php7.1-gd
+    - php7.1-imagick
+    - php7.1-intl
+    - php7.1-json
+    - php7.1-mbstring
+    - php7.1-mcrypt
+    - php7.1-mysql
+    - php7.1-xml
+    - php7.1-zip
+
+- name: Ensure php-fpm pool is present
+  template:
+    src: fpm-pool.conf.j2
+    dest: /etc/php/7.1/fpm/pool.d/nextcloud.conf
+  notify: Reload PHP-FPM
+
+- name: Ensure php-fpm is started and enabled
+  service:
+    name: php7.1-fpm
+    state: started
+    enabled: True
+
+- name: Ensure nextcloud archive is present
+  get_url:
+    url: https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.tar.bz2
+    dest: "{{ nextcloud_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2"
+  register: nextcloud_archive_fetch
+
+- name: Ensure nextcloud archive SHA is present
+  get_url:
+    url: https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.tar.bz2.sha256
+    dest: "{{ nextcloud_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2.sha256"
+  when: nextcloud_archive_fetch.changed
+  tags:
+    - skip_ansible_lint
+
+- name: Verify archive checksum
+  command: sha256sum -c nextcloud-{{ nextcloud_version }}.tar.bz2.sha256
+  args:
+    chdir: "{{ nextcloud_dir }}"
+  when: nextcloud_archive_fetch.changed
+  changed_when: False
+  tags:
+    - skip_ansible_lint
+
+- name: Extract archive
+  unarchive:
+    src: "{{ nextcloud_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2"
+    owner: "{{ nextcloud_user }}"
+    group: "{{ nextcloud_user }}"
+    dest: "{{ nextcloud_dir }}"
+    remote_src: True
+  when: nextcloud_archive_fetch.changed
+  tags:
+    - skip_ansible_lint
+
+- name: Install nextcloud
+  command: php occ maintenance:install \
+    --database "{{ nextcloud_database }}" \
+    --database-host "{{ nextcloud_database_host }}" \
+    --database-name "{{ nextcloud_database_name }}" \
+    --database-user "{{ nextcloud_database_user }}" \
+    --database-pass "{{ nextcloud_database_pass }}" \
+    --admin-user "{{ nextcloud_admin_user }}" \
+    --admin-pass "{{ nextcloud_admin_pass }}"
+  args:
+    chdir: "{{ nextcloud_dir }}/nextcloud"
+    creates: "{{ nextcloud_dir }}/nextcloud/config/config.php"
+  become: true
+  become_user: "{{ nextcloud_user }}"

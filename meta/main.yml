@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Paweł Tatarczuk
+  description: Simple role to provision Nextcloud with PHP-FPM
+  license: BDS
+
+  min_ansible_version: 2.9.0
+
+  platforms:
+    - name: Debian
+      versions:
+        - 10
+
+  galaxy_tags:
+    - nextcloud
+    - phpfpm
+
+dependencies: []
