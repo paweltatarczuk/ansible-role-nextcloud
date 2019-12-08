@@ -2,7 +2,7 @@
 user = {{ nextcloud_user }}
 group = {{ nextcloud_user }}
 
-listen = /run/php/php7.1-nextcloud-fpm.sock
+listen = /var/run/php/php7.1-nextcloud-fpm.sock
 
 listen.owner = {{ nextcloud_http_server_user }}
 listen.group = {{ nextcloud_http_server_group }}
