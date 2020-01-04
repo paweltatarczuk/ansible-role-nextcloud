@@ -40,7 +40,7 @@ def test_php_fpm_ping(host):
 def test_nextcloud(host):
     env = {}
     env["SCRIPT_NAME"] = "/"
-    env["SCRIPT_FILENAME"] = "/srv/nextcloud/nextcloud/index.php"
+    env["SCRIPT_FILENAME"] = "/srv/nextcloud/index.php"
     env["REQUEST_METHOD"] = "GET"
 
     env = ['%s=%s' % (k, v) for k, v in env.items()]
