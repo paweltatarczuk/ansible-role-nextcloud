@@ -11,7 +11,7 @@
 - name: Ensure http server is is present in http server group
   user:
     name: "{{ nextcloud_http_server_user }}"
-    group: "{{ nextcloud_user }}"
+    groups: "{{ nextcloud_user }}"
     append: True
     state: present
 
@@ -69,13 +69,13 @@
 - name: Ensure nextcloud archive is present
   get_url:
     url: https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.tar.bz2
-    dest: "{{ nextcloud_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2"
+    dest: "{{ nextcloud_download_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2"
   register: nextcloud_archive_fetch
 
 - name: Ensure nextcloud archive SHA is present
   get_url:
     url: https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.tar.bz2.sha256
-    dest: "{{ nextcloud_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2.sha256"
+    dest: "{{ nextcloud_download_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2.sha256"
   when: nextcloud_archive_fetch.changed
   tags:
     - skip_ansible_lint
@@ -83,19 +83,45 @@
 - name: Verify archive checksum
   command: sha256sum -c nextcloud-{{ nextcloud_version }}.tar.bz2.sha256
   args:
-    chdir: "{{ nextcloud_dir }}"
+    chdir: "{{ nextcloud_download_dir }}"
   when: nextcloud_archive_fetch.changed
   changed_when: False
   tags:
     - skip_ansible_lint
 
+- name: Ensure temporary directory is present
+  tempfile:
+    state: directory
+    suffix: nextcloud
+  when: nextcloud_archive_fetch.changed
+  tags:
+    - skip_ansible_lint
+  register: nextcloud_tmp_dir
+
 - name: Extract archive
   unarchive:
-    src: "{{ nextcloud_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2"
+    src: "{{ nextcloud_download_dir }}/nextcloud-{{ nextcloud_version }}.tar.bz2"
+    dest: "{{ nextcloud_tmp_dir.path }}"
+    remote_src: True
+  when: nextcloud_archive_fetch.changed
+  tags:
+    - skip_ansible_lint
+
+- name: Ensure nextcloud directory is present
+  copy:
+    src: "{{ nextcloud_tmp_dir.path }}/nextcloud/"
+    dest: "{{ nextcloud_dir }}/"
+    remote_src: True
     owner: "{{ nextcloud_user }}"
     group: "{{ nextcloud_user }}"
-    dest: "{{ nextcloud_dir }}"
-    remote_src: True
+  when: nextcloud_archive_fetch.changed
+  tags:
+    - skip_ansible_lint
+
+- name: Ensure temporary directory is absent
+  file:
+    path: "{{ nextcloud_tmp_dir.path }}"
+    state: absent
   when: nextcloud_archive_fetch.changed
   tags:
     - skip_ansible_lint
@@ -108,9 +134,10 @@
     --database-user "{{ nextcloud_database_user }}" \
     --database-pass "{{ nextcloud_database_pass }}" \
     --admin-user "{{ nextcloud_admin_user }}" \
-    --admin-pass "{{ nextcloud_admin_pass }}"
+    --admin-pass "{{ nextcloud_admin_pass }}" \
+    --data-dir "{{ nextcloud_data_dir }}"
   args:
-    chdir: "{{ nextcloud_dir }}/nextcloud"
-    creates: "{{ nextcloud_dir }}/nextcloud/config/config.php"
+    chdir: "{{ nextcloud_dir }}"
+    creates: "{{ nextcloud_dir }}/config/config.php"
   become: true
   become_user: "{{ nextcloud_user }}"

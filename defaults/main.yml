@@ -2,6 +2,8 @@
 # defaults file for ansible-role-nextcloud
 nextcloud_version: 17.0.1
 nextcloud_dir: /srv/nextcloud
+nextcloud_data_dir: "{{ nextcloud_dir }}/data"
+nextcloud_download_dir: /usr/local/src
 nextcloud_user: www-nextcloud
 
 nextcloud_http_server_user: www-data
