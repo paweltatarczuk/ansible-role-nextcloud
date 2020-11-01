@@ -141,3 +141,11 @@
     creates: "{{ nextcloud_dir }}/config/config.php"
   become: true
   become_user: "{{ nextcloud_user }}"
+
+- name: Ensure cron job in present
+  cron:
+    name: Run nextcloud cron
+    user: "{{ nextcloud_user }}"
+    minute: "*/5"
+    hour: "*"
+    job: /usr/bin/php -f "{{ nextcloud_dir }}/cron.php"
